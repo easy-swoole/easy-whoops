@@ -48,7 +48,7 @@ class EasyWhoops
         var_dump('is appError');
     }
 
-    function registerToContainer($name, callable $callable)
+    private function registerToContainer($name, $callable)
     {
         Di::getInstance()->set($name, $callable);
     }
