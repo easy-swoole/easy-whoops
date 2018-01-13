@@ -335,7 +335,7 @@ class EasyWhoops implements RunInterface
         $output = $this->system->cleanOutputBuffer();
 
         if ($this->writeToOutput()) {
-            $this->writeToOutputNow($output, $handlerContentType);
+            $this->writeToOutputNow($output, $handlerContentType, $exception);
         }
 
         return $output;
@@ -417,7 +417,7 @@ class EasyWhoops implements RunInterface
      * @param null    $handlerContentType
      * @return $this
      */
-    private function writeToOutputNow($output, $handlerContentType = null)
+    private function writeToOutputNow($output, $handlerContentType = null, \Throwable $exception)
     {
         if ($this->sendHttpCode() && \Whoops\Util\Misc::canSendHeaders()) {
             $this->system->setHttpResponseCode(
@@ -431,7 +431,8 @@ class EasyWhoops implements RunInterface
             $Response->autoEnd(true);
             $Response->withHeader('Content-Type', $handlerContentType)->write($output);
         } else {
-            // if null response then write to console
+            echo $exception->getMessage() . "\n";
+            echo $exception->getTraceAsString() . "\n";
         }
 
         return $this;
