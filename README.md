@@ -2,6 +2,12 @@
 
 easySwoole 2.x 版本专用的 Whoops 适配插件
 
+## 安装
+
+```bash
+composer require evalor/easy-whoops
+```
+
 ## 使用方法
 
 在全局事件 **EasySwooleEvent** 中注册以下内容
