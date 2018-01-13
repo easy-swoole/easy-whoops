@@ -25,7 +25,7 @@ class EasyWhoops
      * @param Response $Response the easySwoole Response Object
      * @author : evalor <master@evalor.cn>
      */
-    function instanceIO(Request $Request, Response $Response)
+    static function instanceIO(Request $Request, Response $Response)
     {
         SingletonRequest::getInstance($Request);
         SingletonResponse::getInstance($Response);
