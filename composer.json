@@ -6,7 +6,8 @@
         "filp/whoops": "^2.1"
     },
     "require-dev": {
-        "easyswoole/easyswoole": "2.x-dev"
+        "easyswoole/easyswoole": "2.x-dev",
+        "eaglewu/swoole-ide-helper": "dev-master"
     },
     "license": "Apache-2.0",
     "authors": [
@@ -17,7 +18,8 @@
     ],
     "autoload": {
         "psr-4": {
-            "EasySwoole\\Whoops\\": "src/"
+            "EasySwoole\\Whoops\\": "src/",
+            "App\\": "Application"
         }
     }
 }
