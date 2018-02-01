@@ -5,7 +5,7 @@ easySwoole 2.x 版本专用的 Whoops 适配插件
 ## 安装
 
 ```bash
-composer require evalor/easy-whoops
+composer require esayswoole/easy-whoops
 ```
 
 ## 使用方法
