@@ -1,5 +1,5 @@
 {
-    "name": "evalor/easy-whoops",
+    "name": "easyswoole/easy-whoops",
     "description": "Whoops provider for easySwoole framework 2.x",
     "type": "library",
     "require": {
@@ -18,8 +18,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "EasySwoole\\Whoops\\": "src/",
-            "App\\": "Application"
+            "EasySwoole\\Whoops\\": "src/"
         }
     }
 }
