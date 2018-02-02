@@ -12,10 +12,8 @@ use Whoops\Handler\HandlerInterface;
 use Whoops\Handler\JsonResponseHandler;
 use Whoops\Handler\PlainTextHandler;
 use Whoops\Handler\PrettyPageHandler;
-use Whoops\Handler\XmlResponseHandler;
 use Whoops\RunInterface;
 use Whoops\Util\Misc;
-use Whoops\Util\SystemFacade;
 use EasySwoole\Whoops\Util\SystemFacade as easyFacade;
 
 /**
@@ -41,9 +39,23 @@ class Runner implements RunInterface
     private $isRegistered       = false;
     private $canThrowExceptions = true;
 
-    function __construct(SystemFacade $system = null)
+    private $options = [
+        'auto_conversion' => true,                    // 开启AJAX模式下自动转换为JSON输出
+        'detailed'        => false,                   // 开启详细错误日志输出
+        'information'     => '发生内部错误,请稍后再试'   // 不开启详细输出的情况下 输出的提示文本
+    ];
+
+    /**
+     * Runner constructor.
+     * @param array $options
+     */
+    function __construct(array $options = [])
     {
-        $this->system = $system ?: new easyFacade;
+        $this->system = new easyFacade;
+
+        if (!$options) {
+            $this->options = array_merge($this->options, $options);
+        }
     }
 
     /**
@@ -87,6 +99,11 @@ class Runner implements RunInterface
     public function getHandlers()
     {
         return $this->handlerStack;
+    }
+
+    public function getOptions()
+    {
+        return $this->options;
     }
 
     /**
@@ -254,10 +271,27 @@ class Runner implements RunInterface
         $handlerContentType = null;
         $this->system->startOutputBuffering();
 
+        // 如果当前没有Response 即不能输出到浏览器的情况 强制应用PlainTextHandler
+        if (!$this->system->ResIns()) {
+            $this->clearHandlers();
+            $this->pushHandler(new PlainTextHandler);
+        }
+
+        //  AJAX自动返回Json
+        if (Misc::isAjaxRequest() && $this->options['auto_conversion']) {
+            $this->pushHandler(new JsonResponseHandler);
+        }
+
+        // 关闭详细错误输出
+        if (!$this->options['detailed']) {
+            $this->clearHandlers();
+            $handlerContentType = 'text/html;charset=utf-8';
+            echo $this->options['information'];
+        }
+
         // 反向的遍历handles进行输出设置
         foreach (array_reverse($this->handlerStack) as $handler) {
-            /* @var HandlerInterface|PrettyPageHandler|JsonResponseHandler|PlainTextHandler|XmlResponseHandler $handler */
-
+            /* @var HandlerInterface|PrettyPageHandler $handler */
             if ($handler instanceof PrettyPageHandler) {
                 $handler->handleUnconditionally(true);
             }
@@ -312,6 +346,7 @@ class Runner implements RunInterface
     /**
      * Special case to deal with Fatal errors and the like.
      * @author : evalor <master@evalor.cn>
+     * @throws ErrorException
      */
     public function handleShutdown()
     {
@@ -353,7 +388,8 @@ class Runner implements RunInterface
             $Response->write($output);
             $Response->response();
             $Response->end(true);
+        } else {
+            Logger::getInstance()->console($output);
         }
-        Logger::getInstance()->console($output);
     }
 }

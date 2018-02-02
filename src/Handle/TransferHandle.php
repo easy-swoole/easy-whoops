@@ -8,7 +8,7 @@ use EasySwoole\Core\Http\Response;
 use EasySwoole\Whoops\Runner;
 
 /**
- * Transfer the Handle to EasySwoole
+ * 转换 Whoops Handle 为 easySwoole Handle
  * Class TransferHandle
  * @author  : evalor <master@evalor.cn>
  * @package EasySwoole\Whoops\Handle
@@ -20,23 +20,25 @@ class TransferHandle implements ExceptionHandlerInterface
     public function handle(\Throwable $throwable, Request $request, Response $response)
     {
         /** @var Runner $runClass */
-        $runClass = $this->whoops_handle[0];
-        $function = $this->whoops_handle[1];
-
-        // entrust the request and response to system instance
+        $runClass       = $this->whoops_handle[0];
+        $function       = $this->whoops_handle[1];
         $SystemInstance = $runClass->getSystems();
-        $SystemInstance->cleanSuperGlobalVariables();
+
+        // 托管 Request 和 Response 对象
         $SystemInstance->setRequestInstance($request);
         $SystemInstance->setResponseInstance($response);
+        $SystemInstance->cleanSuperGlobalVariables();
         $SystemInstance->entrustGlobalVariables();
 
-        // run the whoops handle
+        // 执行Handle的渲染操作
         $runClass->$function($throwable);
+
+        // 由于 Swoole 不会自动释放，执行完毕之后进行全局变量释放
         $SystemInstance->cleanSuperGlobalVariables();
     }
 
     /**
-     * Set the Whoops Handle
+     * 设置 Whoops Handle
      * @param callable $handle
      * @author : evalor <master@evalor.cn>
      */
