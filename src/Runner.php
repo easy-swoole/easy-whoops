@@ -41,7 +41,7 @@ class Runner implements RunInterface
 
     private $options = [
         'auto_conversion' => true,                    // 开启AJAX模式下自动转换为JSON输出
-        'detailed'        => false,                   // 开启详细错误日志输出
+        'detailed'        => true,                    // 开启详细错误日志输出
         'information'     => '发生内部错误,请稍后再试'   // 不开启详细输出的情况下 输出的提示文本
     ];
 
