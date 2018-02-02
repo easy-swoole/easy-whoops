@@ -1,5 +1,11 @@
 # easyWhoops
 
+[![Latest Stable Version](https://poser.pugx.org/easyswoole/easy-whoops/v/stable)](https://packagist.org/packages/easyswoole/easy-whoops)
+[![Total Downloads](https://poser.pugx.org/easyswoole/easy-whoops/downloads)](https://packagist.org/packages/easyswoole/easy-whoops)
+[![Latest Unstable Version](https://poser.pugx.org/easyswoole/easy-whoops/v/unstable)](https://packagist.org/packages/easyswoole/easy-whoops)
+[![License](https://poser.pugx.org/easyswoole/easy-whoops/license)](https://packagist.org/packages/easyswoole/easy-whoops)
+[![Monthly Downloads](https://poser.pugx.org/easyswoole/easy-whoops/d/monthly)](https://packagist.org/packages/easyswoole/easy-whoops)
+
 easySwoole 2.x 版本专用的 Whoops 适配插件
 
 ## 安装
@@ -10,7 +16,7 @@ composer require esayswoole/easy-whoops
 
 ## 预览
 
-![screenshot][src/screenshot.png]
+![Whoops!](http://i.imgur.com/0VQpe96.png)
 
 ## 使用
 
