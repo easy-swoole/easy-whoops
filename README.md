@@ -28,14 +28,15 @@ use Whoops\Handler\PrettyPageHandler;
 
 public function frameInitialize(): void
 {
-  date_default_timezone_set('Asia/Shanghai');
-  $options = [
+  // 可以进行更多设置，默认为以下设置
+  $options = [
     'auto_conversion' => true,                    // 开启AJAX模式下自动转换为JSON输出
     'detailed'        => true,                    // 开启详细错误日志输出
     'information'     => '发生内部错误,请稍后再试'   // 不开启详细输出的情况下 输出的提示文本
   ];
   $whoops  = new Runner($options);
-  $whoops->pushHandler(new PrettyPageHandler);
+  // 注册异常事件处理
+  $whoops->pushHandler(new PrettyPageHandler);
   $whoops->register();
 }
 ```
