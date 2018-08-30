@@ -6,7 +6,7 @@
 [![License](https://poser.pugx.org/easyswoole/easy-whoops/license)](https://packagist.org/packages/easyswoole/easy-whoops)
 [![Monthly Downloads](https://poser.pugx.org/easyswoole/easy-whoops/d/monthly)](https://packagist.org/packages/easyswoole/easy-whoops)
 
-easySwoole 2.x 版本专用的 Whoops 适配插件
+easySwoole 2.x 版本专用的 Whoops 适配插件，仅能用于Swoole版本1.x-2.x，不能用于协程模式下，仅供研究使用，生产环境请勿开启
 
 ## 安装
 
