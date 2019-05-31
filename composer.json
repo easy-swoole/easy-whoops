@@ -1,13 +1,16 @@
 {
     "name": "easyswoole/easy-whoops",
-    "description": "Whoops provider for easySwoole framework 2.x",
+    "description": "Whoops provider for easySwoole framework 3.x",
     "type": "library",
     "require": {
-        "filp/whoops": "^2.1"
+        "filp/whoops": "^2.3",
+        "easyswoole/component": "^1.7",
+        "easyswoole/utility": "^1.0",
+        "easyswoole/spl": "^1.1"
     },
     "require-dev": {
-        "easyswoole/easyswoole": "2.x-dev",
-        "eaglewu/swoole-ide-helper": "dev-master"
+        "easyswoole/easyswoole": "3.x-dev",
+        "easyswoole/swoole-ide-helper": "dev-master"
     },
     "license": "Apache-2.0",
     "authors": [
@@ -18,8 +21,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "EasySwoole\\Whoops\\": "src/",
-            "App\\": "App/"
+            "EasySwoole\\Whoops\\": "src/"
         }
     }
 }
