@@ -10,7 +10,7 @@
 
 ## 效果预览
 
-![Whoops!](https://imgur.com/RKOCgXP)
+![Whoops!](https://i.imgur.com/RKOCgXP.png)
 
 ## 安装类库
 
