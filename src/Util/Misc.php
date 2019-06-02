@@ -12,9 +12,8 @@ use EasySwoole\Http\Response;
  * Class Misc
  * @package EasySwoole\Whoops\Util
  */
-class Misc extends \Whoops\Util\Misc
+class Misc
 {
-
     const CONTEXT_REQUEST = 'request';
     const CONTEXT_RESPONSE = 'response';
 
@@ -54,11 +53,11 @@ class Misc extends \Whoops\Util\Misc
      * 只要存在响应对象并且没有逻辑END
      * @return bool
      */
-    public static function canSendHeaders(): bool
+    public static function canSendResponse(): bool
     {
         $response = Misc::getEasySwooleResponse();
         if ($response instanceof Response) {
-            return !$response->isEndResponse();
+            return true;
         }
         return false;
     }
@@ -79,11 +78,46 @@ class Misc extends \Whoops\Util\Misc
 
     /**
      * 当前是否在CLI
+     * 由于Swoole始终在CLI运行 则需要判断当前是否注入了Request对象 无注入则无法输出到web
      * @return bool
      */
     public static function isCommandLine()
     {
-        return (Misc::getEasySwooleRequest() instanceof Request);
+        return !Misc::canSendResponse();
+    }
+
+    /**
+     * 将错误异常代码转换为表示的常量
+     * @param int $error_code
+     * @return string
+     */
+    public static function translateErrorCode($error_code)
+    {
+        $constants = get_defined_constants(true);
+        if (array_key_exists('Core', $constants)) {
+            foreach ($constants['Core'] as $constant => $value) {
+                if (substr($constant, 0, 2) == 'E_' && $value == $error_code) {
+                    return $constant;
+                }
+            }
+        }
+        return "E_UNKNOWN";
+    }
+
+    /**
+     * 确定错误级别是否致命（停止执行）
+     * @param int $level
+     * @return bool
+     */
+    public static function isLevelFatal($level)
+    {
+        $errors = E_ERROR;
+        $errors |= E_PARSE;
+        $errors |= E_CORE_ERROR;
+        $errors |= E_CORE_WARNING;
+        $errors |= E_COMPILE_ERROR;
+        $errors |= E_COMPILE_WARNING;
+        return ($level & $errors) > 0;
     }
 
 }

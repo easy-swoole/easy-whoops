@@ -3,14 +3,18 @@
     "description": "Whoops provider for easySwoole framework 3.x",
     "type": "library",
     "require": {
-        "filp/whoops": "^2.3",
         "easyswoole/component": "^1.7",
         "easyswoole/utility": "^1.0",
-        "easyswoole/spl": "^1.1"
+        "easyswoole/spl": "^1.1",
+        "psr/log": "^1.0.1",
+        "easyswoole/template": "^1.0"
     },
     "require-dev": {
         "easyswoole/easyswoole": "3.x-dev",
         "easyswoole/swoole-ide-helper": "dev-master"
+    },
+    "suggest": {
+        "symfony/var-dumper": "Pretty print complex values better with var-dumper available"
     },
     "license": "Apache-2.0",
     "authors": [
@@ -22,6 +26,11 @@
     "autoload": {
         "psr-4": {
             "EasySwoole\\Whoops\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\": "App/"
         }
     }
 }

@@ -2,23 +2,29 @@
 
 namespace EasySwoole\Whoops;
 
+use EasySwoole\Component\Context\Exception\ModifyError;
+use EasySwoole\Http\Request;
+use EasySwoole\Http\Response;
+
+use EasySwoole\Utility\Random;
+use EasySwoole\Whoops\Exception\ErrorException;
+use EasySwoole\Whoops\Exception\Inspector;
+use EasySwoole\Whoops\Handler\CallbackHandler;
+use EasySwoole\Whoops\Handler\Handler;
+use EasySwoole\Whoops\Handler\HandlerInterface;
 use EasySwoole\Whoops\Util\Misc;
+use EasySwoole\Whoops\Util\SeparateEngine;
+use EasySwoole\Whoops\Util\SeparateRender;
 use EasySwoole\Whoops\Util\SystemFacade;
-
-use Whoops\Exception\ErrorException;
-use Whoops\Exception\Inspector;
-use Whoops\Handler\CallbackHandler;
-use Whoops\Handler\Handler;
-use Whoops\Handler\HandlerInterface;
-use Whoops\RunInterface;
-
+use Exception;
+use Throwable;
 use InvalidArgumentException;
 
 /**
  * Class WhoopsRunner
  * @package EasySwoole\Whoops
  */
-class WhoopsRunner implements RunInterface
+class Run implements RunInterface
 {
     private $isRegistered;
     private $allowQuit = false;
@@ -32,15 +38,24 @@ class WhoopsRunner implements RunInterface
     /** @var HandlerInterface[] */
     private $handlerStack = [];
 
+    /**
+     * Run constructor.
+     * @param SystemFacade|null $system
+     * @throws Exception
+     */
     public function __construct(SystemFacade $system = null)
     {
+        // 当前是否在EASYSWOOLE环境 由于注册时服务尚未启动 直接die输出
+        if (!defined("EASYSWOOLE_ROOT")) {
+            die("\nEasyWhoops must run in EasySwoole framework! the EasyWhoops extension is in development phase, do not enable it in production environment!\n\n");
+        }
         $this->system = $system ?: new SystemFacade;
     }
 
     /**
      * 向当前堆栈推入一个处理句柄
      * @param Callable|HandlerInterface $handler
-     * @return $this|WhoopsRunner
+     * @return $this|Run
      */
     public function pushHandler($handler)
     {
@@ -79,7 +94,7 @@ class WhoopsRunner implements RunInterface
 
     /**
      * 清空处理堆栈
-     * @return $this|WhoopsRunner
+     * @return $this|Run
      */
     public function clearHandlers()
     {
@@ -100,19 +115,19 @@ class WhoopsRunner implements RunInterface
 
     /**
      * 注册错误处理器
-     * @return WhoopsRunner
+     * @return Run
      */
-    public function register(): WhoopsRunner
+    public function register(): Run
     {
         if (!$this->isRegistered) {
 
             // Workaround PHP bug 42098
             // https://bugs.php.net/bug.php?id=42098
 
-            class_exists("\\Whoops\\Exception\\ErrorException");
-            class_exists("\\Whoops\\Exception\\FrameCollection");
-            class_exists("\\Whoops\\Exception\\Frame");
-            class_exists("\\Whoops\\Exception\\Inspector");
+            class_exists("\\EasySwoole\\Whoops\\Exception\\ErrorException");
+            class_exists("\\EasySwoole\\Whoops\\Exception\\FrameCollection");
+            class_exists("\\EasySwoole\\Whoops\\Exception\\Frame");
+            class_exists("\\EasySwoole\\Whoops\\Exception\\Inspector");
 
             $this->system->setErrorHandler([$this, self::ERROR_HANDLER]);
             $this->system->setExceptionHandler([$this, self::EXCEPTION_HANDLER]);
@@ -126,7 +141,7 @@ class WhoopsRunner implements RunInterface
 
     /**
      * 注册后暂不支持撤销
-     * @return bool|WhoopsRunner
+     * @return bool|Run
      */
     public function unregister()
     {
@@ -148,7 +163,7 @@ class WhoopsRunner implements RunInterface
      * 符合表达式的错误都将被忽略
      * @param array|string $patterns
      * @param int $levels
-     * @return $this|WhoopsRunner
+     * @return $this|Run
      */
     public function silenceErrorsInPaths($patterns, $levels = 10240)
     {
@@ -222,16 +237,15 @@ class WhoopsRunner implements RunInterface
 
     /**
      * 异常处理
-     * @param \Throwable $exception
+     * PrettyPageHandler 已经实现了在内部使用协程安全的独立进程渲染
+     * @param Throwable $exception
      * @return string|void
+     * @throws Exception
      */
     public function handleException($exception)
     {
         // 按注册的处理程序的相反顺序遍历它们，并传递异常
         $inspector = $this->getInspector($exception);
-
-        // 捕获处理异常时产生的输出，我们可能希望直接将其发送到客户端，或者静默地返回它。
-        $this->system->startOutputBuffering();
 
         // 以防没有处理程序
         $handlerResponse = null;
@@ -239,50 +253,24 @@ class WhoopsRunner implements RunInterface
 
         foreach (array_reverse($this->handlerStack) as $handler) {
 
+            /** @var HandlerInterface $handler */
             $handler->setRun($this);
             $handler->setInspector($inspector);
             $handler->setException($exception);
+            $handlerResponse = $handler->handle();
 
-            // 内置的处理句柄都不依赖于该方法设置的handle 但为了避免对第三方处理程序造成破坏所以保留该项
-            $handlerResponse = $handler->handle($exception);
-
-            // 收集contentType以便接下来发送
+            // 获取响应内容并为输出到客户端做准备
+            $output = $handler->getHandleContent();
             $handlerContentType = method_exists($handler, 'contentType') ? $handler->contentType() : null;
-
-            // 如果处理器已经把异常处理掉了并希望退出(Handler::QUIT) 或 不继续执行后续的处理器(Handler::LAST_HANDLER)
-            if (in_array($handlerResponse, [Handler::LAST_HANDLER, Handler::QUIT])) {
-                break;
-            }
-
-            // 拿到处理阶段写入缓冲区的所有输出文本
             $willQuit = $handlerResponse == Handler::QUIT && $this->allowQuit();
-            $output = $this->system->cleanOutputBuffer();
+            $willSkip = $handlerResponse == Handler::LAST_HANDLER;
 
-            // 如果允许输出则输出到Response 否则跳过该步骤直接返回
+            // 如果当前允许输出到客户端 则进行内容输出
             if ($this->writeToOutput()) {
-                // @todo Might be able to clean this up a bit better
-                if ($willQuit) {
-                    // 在发送输出之前清除所有其他输出缓冲区
-                    while ($this->system->getOutputBufferLevel() > 0) {
-                        $this->system->endOutputBuffering();
-                    }
-
-                    // 如果允许则发送需要的响应头
-                    if (Misc::canSendHeaders() && $handlerContentType) {
-                        header("Content-Type: {$handlerContentType}");
-                    }
-                }
-
-                $this->writeToOutputNow($output);
+                if ($handlerContentType) $this->system->setHttpHeader('Content-Type', $handlerContentType);
+                if ($this->sendHttpCode()) $this->system->setHttpResponseCode($this->sendHttpCode());
+                $this->writeToOutputNow($output);  // 这里会智能选择控制台或Response进行输出
             }
-
-            if ($willQuit) {
-                // HHVM fix for https://github.com/facebook/hhvm/issues/4055
-                $this->system->flushOutputBuffer();
-                $this->system->stopExecution(1);
-            }
-
-            return $output;
         }
     }
 
@@ -294,6 +282,7 @@ class WhoopsRunner implements RunInterface
      * @param null $line
      * @return bool
      * @throws ErrorException
+     * @throws Exception
      */
     public function handleError($level, $message, $file = null, $line = null)
     {
@@ -338,18 +327,44 @@ class WhoopsRunner implements RunInterface
     }
 
     /**
-     * 立即输出给客户端
+     * 进行一次输出
+     * 会判断当前是否有Response 如果没有则意味着只能输出到控制台
      * @param $output
      * @return $this
      */
     private function writeToOutputNow($output)
     {
-        if ($this->sendHttpCode() && \Whoops\Util\Misc::canSendHeaders()) {
-            $this->system->setHttpResponseCode($this->sendHttpCode());
+        // 如果当前还没有Response对象 则输出到控制台 否则输出到Response
+        if (Misc::isCommandLine()) {
+            echo $output;
+        } else {
+            $this->system->sendHttpBody($output);
         }
-
-        echo $output;
         return $this;
+    }
+
+    /**
+     * 拦截onRequest使Whoops能拿到全局的请求和响应对象
+     * @param Request $request
+     * @param Response $response
+     * @throws ModifyError
+     */
+    public static function attachRequest(Request $request, Response $response)
+    {
+        Misc::hookOnRequest($request, $response);
+    }
+
+    /**
+     * 如果需要PuttyHandle则需要先行注册模板引擎
+     * @param $server
+     */
+    public static function attachTemplateRender($server)
+    {
+        $separateRender = SeparateRender::getInstance();
+        $separateRender->getConfig()->setTempDir(sys_get_temp_dir());
+        $separateRender->getConfig()->setSocketPrefix(Random::character(6));
+        $separateRender->getConfig()->setRender(new SeparateEngine);
+        $separateRender->attachServer($server);
     }
 
 }
