@@ -237,9 +237,9 @@ class SeparateEngine implements RenderInterface
      * @param array $options
      * @return string|null
      */
-    public function render($template, array $variables = null, array $options = []): ?string
+    public function render(string $template, array $variables = [], array $options = []): ?string
     {
-        if ($variables !== null) {
+        if (!empty($variables)) {
             $this->variables = $variables;
         }
 
