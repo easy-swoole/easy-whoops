@@ -362,7 +362,6 @@ class Run implements RunInterface
     {
         $separateRender = SeparateRender::getInstance();
         $separateRender->getConfig()->setTempDir(sys_get_temp_dir());
-        $separateRender->getConfig()->setSocketPrefix(Random::character(6));
         $separateRender->getConfig()->setRender(new SeparateEngine);
         $separateRender->attachServer($server);
     }
