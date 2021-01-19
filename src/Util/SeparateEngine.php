@@ -21,7 +21,7 @@ class SeparateEngine implements RenderInterface
         // TODO: Implement afterRender() method.
     }
 
-    public function onException(\Throwable $throwable): string
+    public function onException(\Throwable $throwable, $arg): string
     {
         return 'Template Render Error: ' . $throwable->getMessage();
     }
@@ -237,7 +237,7 @@ class SeparateEngine implements RenderInterface
      * @param array $options
      * @return string|null
      */
-    public function render(string $template, array $variables = [], array $options = []): ?string
+    public function render(string $template, ?array $variables = [], ?array $options = []): ?string
     {
         if (!empty($variables)) {
             $this->variables = $variables;
