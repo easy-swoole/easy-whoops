@@ -33,7 +33,6 @@ composer require easyswoole/easy-whoops=3.x
 
 namespace EasySwoole\EasySwoole;
 
-use EasySwoole\Component\Context\Exception\ModifyError;
 use EasySwoole\EasySwoole\Swoole\EventRegister;
 use EasySwoole\EasySwoole\AbstractInterface\Event;
 use EasySwoole\Http\Request;
@@ -42,6 +41,7 @@ use EasySwoole\Whoops\Handler\CallbackHandler;
 use EasySwoole\Whoops\Handler\PrettyPageHandler;
 use EasySwoole\Whoops\Run;
 use \Exception;
+use EasySwoole\Component\Di;
 
 class EasySwooleEvent implements Event
 {
@@ -60,6 +60,18 @@ class EasySwooleEvent implements Event
             // 可以推进多个Handle 支持回调做更多后续处理
         }));
         $whoops->register();
+        
+        // 收到请求时
+        Di::getInstance()->set(\EasySwoole\EasySwoole\SysConst::HTTP_GLOBAL_ON_REQUEST, function (Request $request, Response $response): bool {
+            // 拦截请求
+            Run::attachRequest($request, $response);
+            return true;
+        });
+        
+        // 请求结束时
+        Di::getInstance()->set(\EasySwoole\EasySwoole\SysConst::HTTP_GLOBAL_AFTER_REQUEST, function (Request $request, Response $response): void {
+            // TODO: Implement afterAction() method.
+        });
     }
 
     /**
@@ -70,28 +82,6 @@ class EasySwooleEvent implements Event
     {
         Run::attachTemplateRender(ServerManager::getInstance()->getSwooleServer());
     }
-
-    /**
-     * 收到请求时
-     * @param Request $request
-     * @param Response $response
-     * @return bool
-     * @throws ModifyError
-     */
-    public static function onRequest(Request $request, Response $response): bool
-    {
-        Run::attachRequest($request, $response);
-        return true;
-    }
-
-    /**
-     * 请求结束时
-     * @param Request $request
-     * @param Response $response
-     */
-    public static function afterRequest(Request $request, Response $response): void
-    {
-        // TODO: Implement afterAction() method.
-    }
+    
 }
 ```
