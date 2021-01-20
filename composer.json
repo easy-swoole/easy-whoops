@@ -7,7 +7,7 @@
         "easyswoole/utility": "^1.0",
         "easyswoole/spl": "^1.1",
         "psr/log": "^1.0.1",
-        "easyswoole/template": "^1.0"
+        "easyswoole/template": "~1.1.0"
     },
     "require-dev": {
         "easyswoole/easyswoole": "3.x-dev",
