@@ -40,16 +40,12 @@ use EasySwoole\Http\Response;
 use EasySwoole\Whoops\Handler\CallbackHandler;
 use EasySwoole\Whoops\Handler\PrettyPageHandler;
 use EasySwoole\Whoops\Run;
-use \Exception;
 use EasySwoole\Component\Di;
 
 class EasySwooleEvent implements Event
 {
-    private $whoopsInstance;
-
     /**
      * 框架初始化
-     * @throws Exception
      */
     public static function initialize()
     {
